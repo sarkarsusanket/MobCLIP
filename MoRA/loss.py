@@ -24,18 +24,20 @@ class Loss(nn.Module):
 
         """
         
-        for key, value in logits.items():
-            if value is not None: 
-                device = value.device  
-                shape = value.shape  
-                labels = torch.arange(shape[0], device=device, dtype=torch.long)
-                break
+        # for key, value in logits.items():
+        #     if value is not None: 
+        #         device = value.device  
+        #         shape = value.shape  
+        #         labels = torch.arange(shape[0], device=device, dtype=torch.long)
+        #         break
 
         clip_loss = 0
         valid_count = 0
 
         for key, value in logits.items():
             if value is not None:
+                labels = torch.arange(value.shape[0], device=value.device, dtype=torch.long)
+                # print("The shape of the logits is ", value.shape, " and the shape of the labels is ", labels.shape)
                 clip_loss += F.cross_entropy(value, labels)
                 valid_count += 1
 

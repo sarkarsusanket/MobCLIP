@@ -1,4 +1,8 @@
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
+
 import torch
+torch.backends.cudnn.enabled=False
 import numpy as np
 from pathlib import Path
 import lightning.pytorch
@@ -9,51 +13,44 @@ from loss import Loss
 from data import FeatureDataModule
 
 
-
+# def load_mobility(mob_features_path):
+#     mob_data = np.load(mob_features_path)
+#     embs = mob_data['embeddings']
+#     node_ids = mob_data['node_ids']
+#     max_id = len(node_ids)
+#     dim = embs.shape[1]
+#     mob_features = torch.full((max_id + 1, dim), 1e-8, dtype=torch.float32)
+#     mob_features[node_ids] = torch.from_numpy(embs).to(torch.float32)
+#     return mob_features
 
 class MobCLIPLightningModule(lightning.pytorch.LightningModule):
     def __init__(
         self,
-        poi_dim=1024,
-        demo_dim=40,
-        image_dim=768,
-        demo_hidden_dim=64,
         embedding_dim = 128,
         mob_features_path = None,
         gnn_layers=2,
-        poi_scale=0.2,
-        demo_scale=0.2,
-        image_scale=0.2,
+        scale=0.2,
         learning_rate=1e-4,
         weight_decay=0.01,
-        
-        
     ) -> None:
         super().__init__()
 
-
-        self.mob_features = np.load(mob_features_path)
-        self.mob_features = torch.tensor(self.mob_features, dtype=torch.float)
+        data = np.load(mob_features_path)
+        self.mob_features = torch.from_numpy(data["embeddings"]).to(torch.float32)
+        # self.mob_features_id = data["node_ids"]
         self.model = MobCLIP(
-        poi_dim=poi_dim,
-        demo_dim=demo_dim,
-        image_dim=image_dim,
-        demo_hidden_dim=demo_hidden_dim,
-        embedding_dim=embedding_dim,
-        mob_features = self.mob_features,
-        gnn_layers=gnn_layers,
-        poi_scale=poi_scale,
-        demo_scale=demo_scale,
-        image_scale=image_scale
+            embedding_dim=embedding_dim,
+            mob_features = self.mob_features,
+            gnn_layers=gnn_layers,
+            scale=scale
         )
 
-      
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self.loss_fun = Loss()
         self.save_hyperparameters()
 
-    def common_step(self, batch, batch_idx):
+    def common_step(self, batch):
         
         global_indices = batch["index"]  
         device = global_indices.device  
@@ -64,14 +61,14 @@ class MobCLIPLightningModule(lightning.pytorch.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        loss = self.common_step(batch, batch_idx)
+        loss = self.common_step(batch)
         self.log("train_loss", loss)
         self.print(f"train_loss: {loss.item()}")
         
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self.common_step(batch, batch_idx)
+        loss = self.common_step(batch)
         self.log("val_loss", loss)
         self.print(f"val_loss: {loss.item()}")
         
@@ -148,14 +145,20 @@ def cli_main(default_config_filename= "./configs/default.yaml"):
 
     cli.trainer.fit(
         model=cli.model,
-        datamodule=cli.datamodule
+        datamodule=cli.datamodule,
+        # ckpt_path = r"/home/susanket/mobclip_logs/US/Hex6-random-init/checkpoints/epoch=94-val_loss=5.01.ckpt"
         
     )
     
 
 if __name__ == "__main__":
-    config_fn =  "./configs/default_ChinaFullSet.yaml"
-    print(torch.cuda.get_device_name(device=0))
-    torch.backends.cuda.matmul.allow_tf32 = True
+    config_fn =  "/home/susanket/MobCLIP/src/MoRA/MoRA/configs/default_USA_Hex6.yaml"
+    torch.multiprocessing.set_sharing_strategy('file_system')
+
+    if torch.cuda.get_device_name(device=0)=='NVIDIA A100 80GB PCIe':
+        torch.set_float32_matmul_precision("highest")
+        print('Model go vroom! 🚀')
+    else:
+        torch.set_float32_matmul_precision("high")
 
     cli_main(config_fn)

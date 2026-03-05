@@ -1,0 +1,98 @@
+# lightning.pytorch==2.6.1
+seed_everything: 0
+trainer:
+  accelerator: auto
+  strategy: auto
+  devices: auto
+  num_nodes: 1
+  precision: null
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: mobclip_logs
+      name: US
+      version: Hex6-random-init-with-text
+      prefix: ''
+      flush_logs_every_n_steps: 100
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      dirpath: null
+      filename: '{epoch}-{val_loss:.2f}'
+      monitor: val_loss
+      verbose: false
+      save_last: false
+      save_top_k: 1
+      save_on_exception: false
+      save_weights_only: false
+      mode: min
+      auto_insert_metric_name: true
+      every_n_train_steps: null
+      train_time_interval: null
+      every_n_epochs: null
+      save_on_train_epoch_end: null
+      enable_version_counter: true
+  - class_path: lightning.pytorch.callbacks.EarlyStopping
+    init_args:
+      monitor: val_loss
+      min_delta: 0.0
+      patience: 10
+      verbose: true
+      mode: min
+      strict: true
+      check_finite: true
+      stopping_threshold: null
+      divergence_threshold: null
+      check_on_train_epoch_end: null
+      log_rank_zero_only: false
+  fast_dev_run: false
+  max_epochs: 1000
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: null
+  limit_val_batches: null
+  limit_test_batches: null
+  limit_predict_batches: null
+  overfit_batches: 0.0
+  val_check_interval: null
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: null
+  log_every_n_steps: 1
+  enable_checkpointing: null
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 1
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  deterministic: null
+  benchmark: null
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+  default_root_dir: null
+  enable_autolog_hparams: true
+  model_registry: null
+model:
+  embedding_dim: 128
+  mob_features_path: /data/susanket/mobclip/data/mobility_line_embeddings_hex6.npz
+  gnn_layers: 2
+  scale: 0.5
+  learning_rate: 0.001
+  weight_decay: 0.001
+data:
+  mob_path: /data/susanket/mobclip/data/mobility_line_embeddings_hex6.npz
+  feature_paths: /data/susanket/mobclip/preprocessed_gdbs/hex6_features_text.npz
+  mob_graph_path: /data/susanket/mobclip/data/mobility_adjacency_mat_hex6.npz
+  batch_size: 5120
+  num_workers: 92
+  val_random_split_fraction: 0.1
+watchmodel: true
+optimizer: null
+lr_scheduler: null

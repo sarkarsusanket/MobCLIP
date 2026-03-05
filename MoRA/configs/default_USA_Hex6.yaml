@@ -6,9 +6,9 @@ trainer:
     class_path: lightning.pytorch.loggers.CSVLogger
    
     init_args:
-      save_dir: 'my_logs'
-      name: 'mobclip'
-      version: 'china'
+      save_dir: 'mobclip_logs'
+      name: 'US'
+      version: 'Hex6-random-init-with-text'
          
 
   callbacks:
@@ -25,32 +25,27 @@ trainer:
         mode: "min"
         verbose: true       
         
-  max_epochs: 100
+  max_epochs: 1000
 
   
   
 model:
-  poi_dim: 1024
-  demo_dim: 40
-  image_dim: 768
-  demo_hidden_dim: 64
   embedding_dim : 128
-  mob_features_path:   # path for mobility LINE embeddings
-  demo_scale: 0.7
-  image_scale: 0.2
-  poi_scale: 0.5
+  mob_features_path: /data/susanket/mobclip/data/mobility_line_embeddings_hex6.npz  # path for mobility LINE embeddings
+  # demo_scale: 0.7
+  # image_scale: 0.2
+  # poi_scale: 0.5
+  scale: 0.5
   learning_rate: 0.001
   weight_decay: 0.001
  
 
 data:
-  mob_path:     # path for mobility LINE embeddings
-  poi_path:     # path for POI features
-  demo_path: # path for demo features
-  image_path:  # path for image features
-  mob_graph_path: # path for mobility graph
-  batch_size: 20480
-  num_workers: 8
+  mob_path: /data/susanket/mobclip/data/mobility_line_embeddings_hex6.npz  # path for mobility LINE embeddings
+  feature_paths: /data/susanket/mobclip/preprocessed_gdbs/hex6_features_text.npz
+  mob_graph_path: /data/susanket/mobclip/data/mobility_adjacency_mat_hex6.npz # path for mobility graph
+  batch_size: 5120
+  num_workers: 92
   val_random_split_fraction: 0.1
   
 watchmodel: True
